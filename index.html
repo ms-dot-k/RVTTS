@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="generator" content="Hugo 0.88.1" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href=""https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
+	<link rel="stylesheet" href="css/custom.css">
+	<link rel="stylesheet" href="css/normalize.css">
+
+	<title>Image-to-Speech Captioning: Multimodal-Tokens</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+<body data-new-gr-c-s-check-loaded="14.1091.0" data-gr-ext-installed="">
+
+<div class="container" >
+<header role="banner">
+</header>
+<main role="main">
+<article itemscope itemtype="https://schema.org/BlogPosting">
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<div class="text-center">
+        <h3>Towards Practical and Efficient Image-to-Speech Captioning<br>with Vision-Language Pre-training and Multi-modal Tokens</h3>
+
+        <p class="fst-italic mb-0">
+          <br>
+		  Minsu Kim<sup>1</sup>, Jeongsoo Choi<sup>1</sup>, Soumi Maiti<sup>2</sup>, Jeong Hun Yeo<sup>1</sup>, Shinji Watanabe<sup>2</sup>, Yong Man Ro<sup>1</sup> <br>
+		<sup>1</sup> School of Electrical Engineering, KAIST, South Korea <br>
+		<sup>2</sup> Language Technologies Institute, Carnegie Mellon University, USA <br><br><br>
+		<a href="https://arxiv.org/abs/2309.08531">[Paper]</a> <a href="https://github.com/ms-dot-k/Image-to-Speech-Captioning-with-Multimodal-Token">[Code]</a>
+        </p>	
+	<p style="vertical-align: middle; text-align: center; margin-bottom: 80px;"><img src="pics/overview.png" width="400></p>
+	</div>
+</div>
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<h4 id="samples" style="text-align: center;"> &lt;Samples from the COCO captioning dataset&gt; </h4>
+	<p style="vertical-align: middle; text-align: center"><b><sup>*</sup></b>SAT-VQ3-FT used ASR model trained on reconstructed audio on their speech features, so some unclear words are calibrated by the ASR model. <br>Ours are decoded with greedy decoding and transcribed by using an off-the-shelf ASR model. https://huggingface.co/facebook/wav2vec2-large-960h-lv60-self </p>
+	<br>
+	<div class="table-responsive">
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th style="text-align: center">Image ID</th>
+					<th style="text-align: center">Image</th>
+					<th style="text-align: center">SAT-VQ3-FT</th>
+					<th style="text-align: center">Ours</th>
+					<th style="text-align: center">Ours (Image Unit)</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">155</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/155.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/155.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/155.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/155.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a small airplane sitting on the grass </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> an airplane is parked on the grass </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a blue and yellow plan with colorful full air plane </td>
+					
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">1686</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/1686.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/1686.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/1686.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/1686.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man riding skis down a snowy slope </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a woman is going down a snowy slope </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a woman is skeeing down a snow covered slope </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">3233</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/3233.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/3233.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/3233.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/3233.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a plastic tray with fruit sitting on top </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a plate topped with a bejes ennable of food </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a plate of food is on a tray and a sandwich </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">4882</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/4882.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/4882.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/4882.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/4882.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man sitting at a table eating pizza </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man taking a picture of a piza on a table </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a person taking a picture of a piza </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">6515</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/6515.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/6515.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/6515.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/6515.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a parking meter on the side of the road </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a parking meeter sitting on a street </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a parking meter is on a city street </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">8309</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/8309.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/8309.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/8309.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/8309.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a couple of cars sitting on the side of a street </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a red motor cycle parked in a parking lot </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a busy street with cars and cars on it </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">11809</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/11809.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/11809.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/11809.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/11809.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man standing in the grass with a ball </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black and white dog jumping over a frispy </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man is leaping up into the air on a field </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">13471</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/13471.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/13471.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/13471.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/13471.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man sitting on a bench on the beach </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> an old photo of a couple of couple on a bench </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two people sitting on a bench on a bench </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">15061</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/15061.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/15061.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/15061.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/15061.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man riding a wave on a surfboard </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a surfer riding a wave on a surfboard </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man on a surf board writing a waf </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">16622</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/16622.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/16622.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/16622.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/16622.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a street sign and a street sign </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> i street sign ony wouldn't post it ony sign </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black and white photo of a street sign in a field </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">18302</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/18302.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/18302.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/18302.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/18302.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man is standing on a tennis court </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man in a black shirt is playing tennis </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man in a black short swinging a racket on a cord </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">19877</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/19877.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/19877.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/19877.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/19877.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a large body of water with boats sitting on the water </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boat in a river with buildings in the background </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a body of water with boats in the background </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">21549</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/21549.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/21549.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/21549.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/21549.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a small kitchen with a red in and in </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a kitchen sink in a counter with a ball of wine </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a red and white refrigerator in a kitchen </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">23024</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/23024.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/23024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/23024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/23024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a dog walking in a dog holding a yellow frisbee </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown and white dog holding a frisby in his mouth </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a small dog is holding a frisby in its mouth </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">24752</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/24752.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/24752.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/24752.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/24752.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a large red bus on the side of the road </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a small bus is going down a street </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a bus parked on a city street </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">26030</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/26030.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/26030.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/26030.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/26030.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a couple of cows standing in the grass </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown cow with a cow and a cow </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a baby cows and a babyby cow </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">26166</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/26166.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/26166.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/26166.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/26166.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a man standing next to a white frisbee </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man holding a frisby in his hand </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a woman is holding a white frisby in his hands </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">27582</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/27582.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/27582.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/27582.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/27582.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a large cat sitting on a couch </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> an orange cat plays with ta cat on the floor </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> an orange cat playing with a person's head </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">29172</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/29172.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/29172.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/29172.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/29172.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>the large brown bears in the water </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a polar bear is playing with the ball in his ball </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two polar bears in the water with its back </td>
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">30773</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/30773.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/SAT-VQ3-FT/30773.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours/30773.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Ours (Image Unit)/30773.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> <b><sup>*</sup></b>a bike parked on the side of a city street </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a bicycle parked on a sidewalk in a road </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a bicycle is parked on the side of the street </td>
+				</tr>
+				
+			</tbody>
+		</table>
+	</div>
+	<br>
+</div>
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<h4 id="samples" style="text-align: center;"> &lt;Samples from the Flickr8k captioning dataset&gt; </h4>
+	<br>
+	<div class="table-responsive">
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th style="text-align: center">Image ID</th>
+					<th style="text-align: center">Image</th>
+					<th style="text-align: center">Ours</th>
+					<th style="text-align: center">Ours (Image Unit)</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7254</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/422763475_0bc814dac6.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/422763475_0bc814dac6.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/422763475_0bc814dac6.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a person running together in the snow </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a person snow boarding on a snowy surface </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7428</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/247704641_d883902277.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/247704641_d883902277.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/247704641_d883902277.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black and brown dog walking on a long tree branch in the water </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man is walking on a bench in the water </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7495</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/170100272_d820db2199.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/170100272_d820db2199.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/170100272_d820db2199.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a girl is riding on a slide slide in a park </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a baker sitting on a city street </td>
+					
+				</tr>
+				
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7505</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/350443876_c9769f5734.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/350443876_c9769f5734.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/350443876_c9769f5734.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a woman plays with a child on a ladder </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boy bounces on the ground and a white shirt </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7567</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/2170222061_e8bce4a32d.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/2170222061_e8bce4a32d.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/2170222061_e8bce4a32d.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown and white cow jumping in a grassy field </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown and white cow and a brown dog is grazing on a field </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7572</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/514990193_2d2422af2c.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/514990193_2d2422af2c.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/514990193_2d2422af2c.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a woman lying on a couch lying on a couch </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a cat sitting on a couch bed with a stuffed animal on it </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7735</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/3061481868_d1e00b1f2e.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/3061481868_d1e00b1f2e.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/3061481868_d1e00b1f2e.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two people riding on a motorcycle down the road </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two people riding motorcycle down a road </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7789</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/2292406847_f366350600.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/2292406847_f366350600.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/2292406847_f366350600.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a man in a boat is rowing on a boat </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boat is in the water on a body of water </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7808</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/791338571_7f38510bf7.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/791338571_7f38510bf7.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/791338571_7f38510bf7.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black and white cow standing next to a car </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black cow with a cow and a cow on a dirt road </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7824</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/229862312_1a0ba19dab.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/229862312_1a0ba19dab.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/229862312_1a0ba19dab.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown dog rolling in a grassy field </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a brown dog is lying on the grass </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7874</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/2480327661_fb69829f57.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/2480327661_fb69829f57.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/2480327661_fb69829f57.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boy wearing a blue back red collar </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boy wearing a black and white uniform wearing attire in attire </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7892</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/3225310099_d8e419ba56.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/3225310099_d8e419ba56.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/3225310099_d8e419ba56.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boat that is on a boat in the water </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a boat that is posing for a picture </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7962</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/3701291852_373ea46bb6.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/3701291852_373ea46bb6.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/3701291852_373ea46bb6.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two children play in a lake </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> two young men are standing in the grass in the grass </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7988</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/3397220683_4aca010f86.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/3397220683_4aca010f86.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/3397220683_4aca010f86.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a person standing next to a dog on a snowy slope </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a person posing for a picture on skis </td>
+				</tr>
+
+				<tr>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center">7999</td>
+					<td rowspan="2"; style="vertical-align: middle; text-align: center"><img src="images/Flickr8k/3490736665_38710f4b91.jpg" style="min-width: 240px;"/></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours/3490736665_38710f4b91.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					<td style="vertical-align: middle; text-align: center"> <b>Generated Speech:</b><br> <audio controls="controls" style="width: 260px;"><source src="audios/Flickr8k/Ours (Image Unit)/3490736665_38710f4b91.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+				</tr>
+				<tr>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a dog is playing with a tennis ball in his hand </td>
+					<td style="vertical-align: middle; text-align: center"> <b>ASR Transcription:</b><br> a black and white dog jumping op to catch a tennis ball </td>
+				</tr>
+
+			</tbody>
+		</table>
+	</div>
+	<br>
+</div>
+
+
+	
+</article>
+</main>
+</div>
+
+</body>
+</html>
