@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="css/custom.css">
 	<link rel="stylesheet" href="css/normalize.css">
 
-	<title>Image-to-Speech Captioning: Multimodal-Tokens</title>
+	<title>Speech Synthesis Quality - User Study</title>
 	<link href="css/bootstrap.min.css" rel="stylesheet">
 
 </head>
@@ -26,22 +26,28 @@
 
 <div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
 	<div class="text-center">
-        <h3>Towards Practical and Efficient Image-to-Speech Captioning<br>with Vision-Language Pre-training and Multi-modal Tokens</h3>
+        <h3> Speech Synthesis Quality - User Study </h3>
 
         <p class="fst-italic mb-0">
           <br>
-		  Minsu Kim<sup>1</sup>, Jeongsoo Choi<sup>1</sup>, Soumi Maiti<sup>2</sup>, Jeong Hun Yeo<sup>1</sup>, Shinji Watanabe<sup>2</sup>, Yong Man Ro<sup>1</sup> <br>
-		<sup>1</sup> School of Electrical Engineering, KAIST, South Korea <br>
-		<sup>2</sup> Language Technologies Institute, Carnegie Mellon University, USA <br><br><br>
-		<a href="https://arxiv.org/abs/2309.08531">[Paper]</a> <a href="https://github.com/ms-dot-k/Image-to-Speech-Captioning-with-Multimodal-Token">[Code]</a>
+		This is a question sheet for evaluating the speech synthesis performance of multi-modal TTS system. <br>
+		You will listen multiple speech samples and rate the scores from 1 to 5 in a 0.5 scale. <br>
+		Please leave the answer (scores) in the following answer sheet <br>
+		Answer Sheet link:  
         </p>	
 	<p style="vertical-align: middle; text-align: center; margin-bottom: 80px;"><img src="pics/overview.png" width="400></p>
 	</div>
 </div>
 
 <div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
-	<h4 id="samples" style="text-align: center;"> &lt;Samples from the COCO captioning dataset&gt; </h4>
-	<p style="vertical-align: middle; text-align: center"><b><sup>*</sup></b>SAT-VQ3-FT used ASR model trained on reconstructed audio on their speech features, so some unclear words are calibrated by the ASR model. <br>Ours are decoded with greedy decoding and transcribed by using an off-the-shelf ASR model. https://huggingface.co/facebook/wav2vec2-large-960h-lv60-self </p>
+	<h4 id="samples" style="text-align: center;"> &lt; Naturalness and Face Matching Degree &gt; </h4>
+	<p style="vertical-align: middle; text-align: center">		
+		In this section, you rate the given samples with the following criteria. <br>
+		The rating criteria are twofold. <br>
+		1) Naturalness: How naturally the generated speech sounds (i.e., how similar it is to human speech).  <br>
+		2) Face Matching Degree: How well the generated voice matches the given face image. (In your experience, how likely is it that the voice belongs to the person in the face image?) <br>
+		Score description - 1: BAD, 2: POOR, 3: FAIR, 4: GOOD, 5: EXCELLENT (in 0.5 scale) <br>
+	</p>
 	<br>
 	<div class="table-responsive">
 		<table class="table table-hover">
